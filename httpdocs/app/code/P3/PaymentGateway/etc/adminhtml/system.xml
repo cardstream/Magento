@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+	<system>
+		<section id="payment">
+			<group id="P3_PaymentGateway" translate="label" type="text" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
+				<label>Payment Network Gateway</label>
+				<field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Enabled</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+				<field id="integration_type" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Integration Type</label>
+					<source_model>P3\PaymentGateway\Model\Source\Integration</source_model>
+				</field>
+				<field id="title" translate="label comment" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Title</label>
+					<comment>What customers will see to identify this payment method</comment>
+				</field>
+				<field id="merchant_id" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Merchant ID</label>
+				</field>
+				<field id="merchant_shared_key" translate="label comment" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Merchant Shared Key</label>
+						<comment>Ensure only letters and numbers are present without any whitespace or non-word characters</comment>
+				</field>
+				<field id="merchant_gateway_url" translate="label comment" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Gateway URL</label>
+						<comment>Leave blank to use the default gateway URL this module provides</comment>
+				</field>
+				<field id="country_code" translate="label comment" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label> Country Code</label>
+					<comment>ISO Alpha-2, 3 or Numeric code (e.g. GB/GBR/826)</comment>
+				</field>
+				<field id="currency_code" translate="label comment" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label> Currency Code</label>
+					<comment>ISO 4217 Numeric or Alphabetic code (e.g. 826/GBP)</comment>
+				</field>
+				<field id="form_responsive" translate="label" type="select" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Form Responsive</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+				<field id="order_status" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Payment in progress status</label>
+					<source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+				</field>
+				<field id="successful_status" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Successful payment status</label>
+					<source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+				</field>
+				<field id="unsuccessful_status" translate="label" type="select" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Unsuccessful payment status</label>
+					<source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+				</field>
+				<field id="allowspecific" translate="label" type="allowspecific" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Payment from Applicable Countries</label>
+					<source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+				</field>
+				<field id="specificcountry" translate="label" type="multiselect" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Payment from Specific Countries</label>
+					<source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+				</field>
+				<field id="debug" translate="label comment" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Debug</label>
+					<comment>This mode is insecure and will slow performance. Intended for debugging ONLY.</comment>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+			</group>
+		</section>
+	</system>
+</config>

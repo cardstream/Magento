@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+	<default>
+		<payment>
+			<P3_PaymentGateway>
+				<active>1</active>
+				<title>Pay with Payment Network</title>
+                <merchant_id>100856</merchant_id>
+                <merchant_shared_key>Circle4Take40Idea</merchant_shared_key>
+                <integration_type>hosted</integration_type>
+				<order_status>pending</order_status>
+				<successful_status>complete</successful_status>
+				<unsuccessful_status>canceled</unsuccessful_status>
+				<debug>n</debug>
+				<payment_action>true</payment_action>
+				<model>P3\PaymentGateway\Model\Gateway</model>
+			</P3_PaymentGateway>
+		</payment>
+	</default>
+</config>

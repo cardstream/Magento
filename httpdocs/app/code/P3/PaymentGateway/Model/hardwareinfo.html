@@ -1,0 +1,20 @@
+<html>
+    <script>
+    console.log('Collecting device information');
+    const screen_width = (window && window.screen ? window.screen.width : '0');
+    const screen_height = (window && window.screen ? window.screen.height : '0');
+    const screen_depth = (window && window.screen ? window.screen.colorDepth : '0');
+    const identity = (window && window.navigator ? window.navigator.userAgent : '');
+    const language = window.navigator.language;
+    const timezone = (new Date()).getTimezoneOffset();
+    const java = (window && window.navigator ? navigator.javaEnabled() : false);
+
+    document.cookie = 'screen_width=' + screen_width;
+    document.cookie ='screen_height=' + screen_height;
+    document.cookie ='screen_depth=' + screen_depth;
+    document.cookie ='identity=' + identity;
+    document.cookie ='language=' + language;
+    document.cookie ='timezone=' + timezone;
+    document.cookie ='java=' + java;
+    </script>
+</html>
