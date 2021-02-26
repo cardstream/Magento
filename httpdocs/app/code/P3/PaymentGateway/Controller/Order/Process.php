@@ -283,7 +283,7 @@ class Process implements HttpPostActionInterface, HttpGetActionInterface, CsrfAw
             'transactionUnique' => uniqid(),
             'orderRef'          => $ref,
             'countryCode'       => $this->gateway->getConfigData('country_code'),
-            'currencyCode'      => $this->gateway->getConfigData('currency_code'),
+            'currencyCode'      => $order->getBaseCurrency()->getCode(),
             'customerName'      => $billingAddress->getName(),
             'customerAddress'   => $address,
             'customerPostCode'  => $billingAddress->getPostcode(),
