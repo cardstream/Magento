@@ -31,10 +31,6 @@
 					<label> Country Code</label>
 					<comment>ISO Alpha-2, 3 or Numeric code (e.g. GB/GBR/826)</comment>
 				</field>
-				<field id="currency_code" translate="label comment" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
-					<label> Currency Code</label>
-					<comment>ISO 4217 Numeric or Alphabetic code (e.g. 826/GBP)</comment>
-				</field>
 				<field id="form_responsive" translate="label" type="select" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="0">
 					<label>Form Responsive</label>
 					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
