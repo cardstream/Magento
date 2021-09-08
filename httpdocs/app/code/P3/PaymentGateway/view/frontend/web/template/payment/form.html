@@ -22,13 +22,13 @@
 		</div>
 
 		<!-- ko if: document.cookie.indexOf('P3_PaymentGateway_IntegrationMethod=hosted') > -1 -->
-		<p>You will be redirected to the Payment Network Gateway to complete payment.</p>
+		<p>You will be redirected to the Gateway to complete payment.</p>
 		<fieldset data-bind="attr: {class: 'fieldset payment items ccard ' + getCode(), id: 'payment_form_' + getCode()}">
 			<input type='hidden' name='submit' value='1'/>
 		</fieldset>
 		<!-- /ko -->
 		<!-- ko if: document.cookie.indexOf('P3_PaymentGateway_IntegrationMethod=iframe') > -1 -->
-		<p>You will be presented with the Payment Network Gateway to complete payment.</p>
+		<p>You will be presented with the Gateway to complete payment.</p>
 		<fieldset data-bind="attr: {class: 'fieldset payment items ccard ' + getCode(), id: 'payment_form_' + getCode()}">
 			<input type='hidden' name='submit' value='1'/>
 		</fieldset>

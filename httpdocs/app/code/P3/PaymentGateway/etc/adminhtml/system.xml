@@ -21,18 +21,18 @@
 				</field>
 				<field id="merchant_shared_key" translate="label comment" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
 					<label>Merchant Shared Key</label>
-						<comment>Ensure only letters and numbers are present without any whitespace or non-word characters</comment>
+					<comment>Ensure only letters and numbers are present without any whitespace or non-word characters</comment>
 				</field>
 				<field id="merchant_gateway_url" translate="label comment" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="0">
 					<label>Gateway URL</label>
-						<comment>Leave blank to use the default gateway URL this module provides</comment>
-				</field>
-				<field id="country_code" translate="label comment" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
-					<label> Country Code</label>
-					<comment>ISO Alpha-2, 3 or Numeric code (e.g. GB/GBR/826)</comment>
+					<comment>Please enter your gateway URL.</comment>
 				</field>
 				<field id="form_responsive" translate="label" type="select" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="0">
 					<label>Form Responsive</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+				<field id="customer_wallets_enabled" translate="label" type="select" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Customer wallets</label>
 					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 				</field>
 				<field id="order_status" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">

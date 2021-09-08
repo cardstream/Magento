@@ -1,38 +1,92 @@
-# README
+# P3 Payment Gateway for Magento 2
 
-# Contents
+**Compatibility**
 
-- Introduction
-- Prerequisites
-- Installing and configuring the module
-- License
+**Compatible with Magento 2.3 and Magento 2.4**
 
-# Introduction
+Supports both Hosted and Direct integrations
 
-This Magento module provides an easy method to integrate with the payment gateway.
- - Supports versions: **2.3**
+## Installation
+**Step 1:**
 
-# Prerequisites
+If you are upgrading this module, please make sure to disable the module first with `bin/magento module:disable P3_PaymentGateway`. Afterwards, make sure to delete the `app/code/Pixel` or `app/code/P3` directories that may interfere with the new version. Make sure to delete the `P3_PaymentGateway` row from the `setup_module` table in the database so that any database tables required can get created.
 
-- The module requires the following prerequisites to be met in order to function correctly:
-    - SSL **NB: HTTPS is expected to be in place as the payment gateway will respond over SSL when redirecting the user's browser. Failure to provide an environment where HTTPS traffic is possible, will result in the 3DSv2 payment flow failing***
+**Step 2:**
+Copy the contents of `httpdocs` to your Magento root directory. If you are asked if you want to replace any existing files, click Yes.
 
-> Please note that we can only offer support for the module itself. While every effort has been made to ensure the payment module is complete and bug free, we cannot guarantee normal functionality if unsupported changes are made.
+**Step 3:**
+Enable the new module using the command `bin/magento module:enable P3_PaymentGateway`
 
-# Installing and configuring the module
+**Step 4:**
+Upgrade and re-compile magento so that the system will install the module and create all necessary arrangements for the module. This command can be helpful...
+```
+bin/magento setup:upgrade && bin/magento setup:db-schema:upgrade && bin/magento setup:di:compile && chmod 775 -R ./var
+```
 
-1. If you are upgrading this module, please make sure to disable the module first with `bin/magento module:disable P3_PaymentGateway`. Afterwards, make sure to delete the `app/code/Pixel` or `app/code/P3` directories that may interfere with the new version. Make sure to delete the `P3_PaymentGateway` row from the `setup_module` table in the database so that any database tables required can get created.
-2. Copy the contents of httpdocs to your Magento root directory. If you are asked if you want to replace any existing files, click Yes.
-3. Enable the new module using the command `bin/magento module:enable P3_PaymentGateway`
-4. Upgrade and re-compile Magento so that the system will install the module and create all necessary arrangements for the module. This command can be particulary helpful... ```
-bin/magento setup:upgrade && bin/magento setup:db-schema:upgrade && bin/magento setup:di:compile && chmod 775 -R ./var```
-5. Navigate to Stores -> Configuration -> Payment methods
-6. Enter your MerchantID / Secretkey and update the customer/country code.
-7. Select what type of integration you would like to use.
-8. Set what status you would like to update an order to once paid
-9. Set the Enabled option to true.
-10. Click 'Save Changes'.
+**Step 5:**
+Login to the Admin area of Magento. Click on System > Cache Management. Click on the button labelled ‘Flush Magento Cache’, located at the top right of the page.
 
-License
-----
-MIT
+**Step 6:**
+Click on Stores > Configuration then click on Payment Methods under the Sales heading on the left-hand side of the page. All installed payment methods will be displayed.
+
+**Step 7:**
+Click on Payment Network Gateway to expand the configuration options that you will need to fill out before you can use the module. Here you can also select the hosted or direct integration type. Debugging should be turned off during production.
+
+**Step 8:**
+Head over to the store's settings and select advanced and then system. Once on this page; change the caching type to 'Varnished'.
+
+## FAQ
+**The processing page `/paymentgateway/order/process` shows an error page (Page Not Found)**
+
+**Did you upgrade and re-compile Magento?** *Otherwise, have you changed either the order controller filename, the directory the order controller was in, or the name of that directory? Do you have the route setup in the `/etc/frontend/routes.xml` under the route attributes; `id` of `p3` and `frontName` as `p3`. Does that same route contain the module element with a `name` attribute of `P3_PaymentGateway`? If you answered no to any of these questions. Please set up the appropriate arrangements based on the questions asked and try again after an upgrade & recompile command. Ask support if the error continues.*
+
+**I get the following error - router requires an id but one isn't set**
+
+Go to `etc/frontend/routes.xml` and make sure the router element uses an `id` attribute with the value `standard`
+
+**I get the following error - "Module version difference schema version higher/lower than in a database"**
+
+Make sure to delete the `P3_PaymentGateway` row from the setup_module database so that any database tables required can get created during the upgrade/db-schema process upon installation
+
+**I get incorrect signature during checkout**
+
+Is a signature set up in your configuration both in Magento and the MMS? Make sure this only contains alphabetical and numeric characters without any spaces, full-stops, etc.
+
+**I cannot see the Payment Network Gateway in the backend (admin area)**
+
+Please try running the following commands:
+
+```
+php bin/magento setup:upgrade
+php bin/magento setup:di:compile
+```
+**The amount, address and name appear to cache upon a checkout**
+Are you using the latest version of this module which fixes this issue?
+
+Branded Version
+----------------------------
+
+Module is designed to be configured according to customer needs, and it could be easily branded via configuration options,
+for cases when it is needed a different name in payment methods or different defaults in configuration options
+please follow the following steps:
+
+1. Update module defaults, located in `httpdocs/app/PaymentGateway/etc/config.xml`
+   
+    it is safe to update following options: [`title`, `merchant_id`, `merchant_shared_key`, `integration_type`]
+    
+    **Note:** for `integration_type` available options are [`hosted`, `iframe`, `hosted_modal`, `direct`]
+    
+
+2. Update label from `httpdocs/app/PaymentGateway/etc/adminhtml/system.xml` to change how the Magento will show your Payment Method
+    
+    ```
+     ...
+     <group id="P3_PaymentGateway" translate="label" type="text" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
+        
+         <label>My Custom Name</label>
+        
+        <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+     ....
+
+    ```
+   

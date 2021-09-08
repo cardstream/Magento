@@ -40,7 +40,7 @@ define(
 						validate: v => v.match(/^(?:\d{4} ?){3} ?\d{1,4}(?: ?\d{0,3})?$/)
 					},
 					cardExpiryMonth: {
-						error: 'Must be a valid numberic month',
+						error: 'Must be a valid numeric month',
 						validate: v => v >= 1 && v <= 12
 					},
 					cardExpiryYear: {
@@ -94,7 +94,7 @@ define(
 			 */
 			afterPlaceOrder: function () {
 				var title = this.item.title;
-				var uri = url.build('paymentgateway/order/process');
+                var uri = url.build('paymentgateway/order/process');
 				if (document.cookie.indexOf('P3_PaymentGateway_IntegrationMethod=iframe') > -1 ) {
 					// Remove other payment methods now that product is now an order to gain space
 					jQuery('.payment-method, .payment-option, .form-login').each(function(e) {
@@ -112,23 +112,24 @@ define(
 						}
 					});
 					return false;
-				} else if (document.cookie.indexOf('P3_PaymentGateway_IntegrationMethod=direct_v2') > -1 ) {
+				} else if (document.cookie.indexOf('P3_PaymentGateway_IntegrationMethod=direct') > -1 ) {
                     // Remove other payment methods now that product is now an order to gain space
-
                     const fields = Array.from(
                         document.getElementById('payment_form_' + this.getCode()).getElementsByTagName('input')
                     );
+
+                    var screen_width = (window && window.screen ? window.screen.width : '0');
+                    var screen_height = (window && window.screen ? window.screen.height : '0');
+                    var screen_depth = (window && window.screen ? window.screen.colorDepth : '0');
 
                     let data = fields.reduce((carry, item) => {carry[item.name] = item.value; return carry;}, {
-                        step: 2,
-                        threeDSOptions: {
-                            browserScreenWidth: (window && window.screen ? window.screen.width : '0'),
-                            browserScreenHeight: (window && window.screen ? window.screen.height : '0'),
-                            browserScreenColorDepth: (window && window.screen ? window.screen.colorDepth : '0'),
-                            browserUserAgent: (window && window.navigator ? window.navigator.userAgent : ''),
-                            browserLanguage: (window && window.navigator ? (window.navigator.language ? window.navigator.language : window.navigator.browserLanguage) : ''),
-                            browserTimeZone: (new Date()).getTimezoneOffset(),
-                            browserJavaEnabledVal:  (window && window.navigator ? navigator.javaEnabled() : false),
+                        browserInfo: {
+                            deviceChannel: 'browser',
+                            deviceScreenResolution: screen_width + 'x' + screen_height + 'x' + screen_depth,
+                            deviceAcceptLanguage: (window && window.navigator ? (window.navigator.language ? window.navigator.language : window.navigator.browserLanguage) : ''),
+                            deviceIdentity: (window && window.navigator ? window.navigator.userAgent : ''),
+                            deviceTimeZone: (new Date()).getTimezoneOffset(),
+                            deviceCapabilities: 'javascript' + ((window && window.navigator ? navigator.javaEnabled() : false) ? ',java' : ''),
                         }
                     });
 
@@ -140,42 +141,20 @@ define(
                         url: uri,
                         data,
                         success: function(data) {
-                            jQuery('.payment-methods').append(data);
-                            jQuery('.loading-mask').remove();
-                            jQuery('.payment-methods .step-title').text(title);
+                            if (data.hasOwnProperty('success') && data.hasOwnProperty('path')) {
+                                window.location.replace(url.build(data.path));
+                            } else {
+                                jQuery('.payment-methods').append(data);
+                                jQuery('.loading-mask').remove();
+                                jQuery('.payment-methods .step-title').text(title);
+                            }
                         },
                         fail: function(data) {
-                            window.location.replace(uri);
+                            window.location.replace(url.build(data.path));
                         }
                     });
                     return false;
-                } else if (document.cookie.indexOf('P3_PaymentGateway_IntegrationMethod=direct') > -1 ) {
-                    // Remove other payment methods now that product is now an order to gain space
-
-                    const fields = Array.from(
-                        document.getElementById('payment_form_' + this.getCode()).getElementsByTagName('input')
-                    );
-
-                    let data = fields.reduce((carry, item) => {carry[item.name] = item.value; return carry;}, { step: 2 });
-
-                    jQuery('.payment-method, .payment-option, .form-login').each(function(e) {
-                        jQuery(this).remove();
-                    });
-
-                    jQuery.post({
-                        url: uri,
-                        data,
-                        success: function(data) {
-                            jQuery('.payment-methods').append(data);
-                            jQuery('.loading-mask').remove();
-                            jQuery('.payment-methods .step-title').text(title);
-                        },
-                        fail: function(data) {
-                            window.location.replace(uri);
-                        }
-                    });
-                    return false;
-                }  else {
+                } else {
 					window.location.replace(uri);
 				}
 			}
