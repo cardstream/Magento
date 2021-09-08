@@ -13,7 +13,7 @@
 				<unsuccessful_status>canceled</unsuccessful_status>
 				<debug>n</debug>
 				<payment_action>true</payment_action>
-				<model>P3\PaymentGateway\Model\Gateway</model>
+				<model>P3\PaymentGateway\Model\Method\P3Method</model>
 			</P3_PaymentGateway>
 		</payment>
 	</default>
