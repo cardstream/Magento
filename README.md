@@ -1,3 +1,5 @@
+Disclaimer: Please note that we no longer support older versions of SDKs and Modules. We recommend that the latest versions are used.
+
 # P3 Payment Gateway for Magento 2
 
 **Compatibility**
