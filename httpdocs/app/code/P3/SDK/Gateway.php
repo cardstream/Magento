@@ -77,9 +77,12 @@ class Gateway
         }
 
         if (preg_match('/paymentform(\/.*)?/', $gatewayURL) == false) {
-            $this->hostedUrl = $gatewayURL.'paymentform/';
+                $this->hostedUrl = $gatewayURL.'hosted/';
+        } else {
+            $this->hostedUrl = $gatewayURL;
+            $gatewayURL = preg_replace('/paymentform(\/.*)?/', '', $gatewayURL, 1);
         }
-
+        
         $this->hostedModalUrl = $gatewayURL.'hosted/modal/';
         $this->directUrl = $gatewayURL.'direct/';
 
