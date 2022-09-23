@@ -1,0 +1,27 @@
+{
+	"name": "p3/paymentgateway",
+	"description": "Accept payment network payments on your Magento 2 website with hosted & direct integrations",
+	"require": {
+		"php": "~7.1",
+		"ext-openssl": "*",
+        "ext-curl": "*",
+        "ext-bcmath": "*",
+		"magento/module-sales": "100.0.*",
+		"magento/module-checkout": "100.0.*",
+		"magento/module-payment": "100.0.*",
+		"magento/module-quote": "100.0.*",
+		"magento/framework": "100.0.*"
+	},
+	"type": "magento2-module",
+	"version": "2.0.1",
+	"license": [
+		"OSL-3.0",
+		"AFL-3.0"
+	],
+	"autoload": {
+		"files": [ "registration.php" ],
+		"psr-4": {
+			"P3\\PaymentGateway\\": ""
+		}
+	}
+}

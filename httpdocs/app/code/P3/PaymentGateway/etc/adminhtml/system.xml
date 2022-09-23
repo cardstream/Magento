@@ -18,14 +18,17 @@
 				</field>
 				<field id="merchant_id" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
 					<label>Merchant ID</label>
+					<validate>required-entry no-whitespace</validate>
 				</field>
 				<field id="merchant_shared_key" translate="label comment" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
 					<label>Merchant Shared Key</label>
+					<validate>required-entry no-whitespace</validate>
 					<comment>Ensure only letters and numbers are present without any whitespace or non-word characters</comment>
 				</field>
 				<field id="merchant_gateway_url" translate="label comment" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="0">
 					<label>Gateway URL</label>
 					<comment>Please enter your gateway URL.</comment>
+					<validate>required-entry validate-url no-whitespace</validate>
 				</field>
 				<field id="form_responsive" translate="label" type="select" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="0">
 					<label>Form Responsive</label>

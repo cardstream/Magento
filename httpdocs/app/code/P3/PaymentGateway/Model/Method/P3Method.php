@@ -132,7 +132,17 @@ class P3Method extends AbstractMethod {
 
     public function getOrderPlaceRedirectUrl(): string
     {
-        return self::$_urlBuilder->getUrl('paymentgateway/order/process', ['_secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on']).'?XDEBUG_SESSION_START=PHPSTORM';
+        $routeParams = [
+            '_secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on',
+        ];
+
+        $debug = $this->getConfigData('debug');
+
+        if ($debug) {
+            $routeParams['_query']['XDEBUG_SESSION_START'] = 'PHPSTORM';
+        }
+
+        return self::$_urlBuilder->getUrl('paymentgateway/order/process', $routeParams);
     }
 
     ##################################################
@@ -249,7 +259,7 @@ class P3Method extends AbstractMethod {
 
         //'Payment successful - amending order details';
         // Save payment information
-        $amount = number_format($data['amountReceived'] / pow(10, $data['currencyExponent']), $data['currencyExponent']);
+        $amount = number_format($data['amountReceived'] / pow(10, $data['currencyExponent']), $data['currencyExponent'], '.', '');
         // Set order status
         if ($order->getStatus() != $status) {
             $orderMessage = ($data['responseCode'] == "0" ? "Payment Successful" : "Payment Unsuccessful") . "<br/><br/>" .
@@ -359,6 +369,25 @@ class P3Method extends AbstractMethod {
         $this->_checkoutSession->setLastRealOrderId($order->getIncrementId());
     }
 
+    public function onFailedTransaction($data = null) {
+        if (isset($data['orderRef'], $data['responseCode'])) {
+            $status = $this->getConfigData('unsuccessful_status');
+
+            $orderId = str_replace('#', '', $data['orderRef']);
+            $order = $this->orderFactory->create();
+            $order->loadByIncrementId($orderId);
+
+            $orderMessage = ($data['responseCode'] == "0" ? "Payment Successful" : "Payment Unsuccessful") . "<br/><br/>" .
+                "Message: " . $data['responseMessage'] . "<br/>" .
+                "xref: " . $data['xref'] . "<br/>";
+
+            if ($order->getStatus() != $status) {
+                $order->addStatusToHistory($status, $orderMessage, 0);
+            }
+            $order->save();
+        }
+    }
+
     /**
      * @return array
      * @throws Exception
@@ -394,8 +423,8 @@ class P3Method extends AbstractMethod {
             'currencyCode'      => $order->getBaseCurrency()->getCode(),
             'customerName'      => $billingAddress->getName(),
             'customerAddress'   => $address,
-            'customerPostCode'  => $billingAddress->getPostcode(),
             'customerEmail'     => $billingAddress->getEmail(),
+            'customerPHPSESSID' => $_COOKIE['PHPSESSID'],
         ];
 
         if (filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
@@ -404,8 +433,6 @@ class P3Method extends AbstractMethod {
 
         $req['action'] = 'SALE';
         $req['type'] = 1;
-        $req['debug'] = 1;
-        $req['merchantCategoryCode'] = 5411;
 
         if(!is_null($billingAddress->getTelephone())) {
             $req["customerPhone"] = $billingAddress->getTelephone();
@@ -425,12 +452,11 @@ class P3Method extends AbstractMethod {
             && $this->customerSession->isLoggedIn()
         ) {
             //Try and find the users walletID in the wallets table.
-
             $connection = $this->getConnection();
             $where = $connection->select()
                 ->from($connection->getTableName('payment_gateway_wallets'), ['wallet_id'])
                 ->where('merchant_id = ?', $merchantId)
-                ->where('customer_email = ?', $billingAddress->getEmail());
+                ->where('customer_email = ?', $this->customerSession->getCustomer()->getEmail());
 
             $wallets = $connection->fetchAll($where);
 
@@ -456,16 +482,20 @@ class P3Method extends AbstractMethod {
      * A wallet will always be created if a walletID is returned. Even if payment fails.
      */
     protected function createWallet($response) {
+        $merchantId = $this->getConfigData('merchant_id');
+        $customerEmail = $this->customerSession->getCustomer()->getEmail();
+
         //when the wallets is enabled, the user is logged in and there is a wallet ID in the response.
         if ($this->getConfigData('customer_wallets_enabled')
             && $this->integrationType === Integration::TYPE_HOSTED_MODAL
-            && isset($response['walletID'], $response['merchantID'], $response['customerEmail'])) {
+            && $this->customerSession->isLoggedIn()
+            && isset($response['walletID'], $merchantId, $customerEmail)) {
 
             $wallets = $this->getConnection()->fetchAll(
                 $this->getConnection()->select()
                     ->from($this->getConnection()->getTableName('payment_gateway_wallets'), ['wallet_id'])
-                    ->where('merchant_id = ?', $response['merchantID'])
-                    ->where('customer_email = ?', $response['customerEmail'])
+                    ->where('merchant_id = ?', $merchantId)
+                    ->where('customer_email = ?', $customerEmail)
                     ->where('wallet_id = ?', $response['walletID'])
             );
 
@@ -476,7 +506,7 @@ class P3Method extends AbstractMethod {
                     'payment_gateway_wallets',
                     ['merchant_id', 'customer_email', 'wallet_id'],
                     [
-                        [$response['merchantID'], $response['customerEmail'], $response['walletID']]
+                        [$merchantId, $customerEmail, $response['walletID']]
                     ]
                 );
             }

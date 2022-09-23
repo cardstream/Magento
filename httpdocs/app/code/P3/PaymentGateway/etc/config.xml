@@ -3,7 +3,7 @@
 	<default>
 		<payment>
 			<P3_PaymentGateway>
-				<active>1</active>
+				<active>0</active>
 				<title>Pay with Payment Network</title>
                 <merchant_id>100856</merchant_id>
                 <merchant_shared_key>Circle4Take40Idea</merchant_shared_key>

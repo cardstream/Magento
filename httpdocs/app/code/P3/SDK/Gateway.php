@@ -77,12 +77,12 @@ class Gateway
         }
 
         if (preg_match('/paymentform(\/.*)?/', $gatewayURL) == false) {
-                $this->hostedUrl = $gatewayURL.'hosted/';
+            $this->hostedUrl = $gatewayURL.'hosted/';
         } else {
             $this->hostedUrl = $gatewayURL;
             $gatewayURL = preg_replace('/paymentform(\/.*)?/', '', $gatewayURL, 1);
         }
-        
+
         $this->hostedModalUrl = $gatewayURL.'hosted/modal/';
         $this->directUrl = $gatewayURL.'direct/';
 
@@ -228,8 +228,15 @@ HTML;
         $res = $this->client->post($payload);
 
         if (isset($res['responseCode']) && $res['responseCode'] == "0") {
-            $orderMessage = ($res['responseCode'] == "0" ? "Refund Successful" : "Refund Unsuccessful") . "<br/><br/>" .
-                "Amount Refunded: " . (isset($res['amountReceived']) ? number_format($res['amountReceived'] / pow(10, $res['currencyExponent']), $res['currencyExponent']) : "None") . "<br/><br/>" .
+            $orderMessage = ($res['responseCode'] == "0" ? "Refund Successful" : "Refund Unsuccessful") . "<br/><br/>";
+
+            $state = $res['state'] ?? null;
+
+            if ($state != 'canceled') {
+                $orderMessage .= "Amount Refunded: " . (isset($res['amountReceived']) ? number_format($res['amountReceived'] / pow(10, $res['currencyExponent']), $res['currencyExponent']) : "None") . "<br/><br/>";
+            }
+
+            $orderMessage .=
                 "Message: " . $res['responseMessage'] . "<br/>" .
                 "xref: " . $res['xref'] . "<br/>";
 

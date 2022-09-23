@@ -5,6 +5,9 @@
 			<argument name="model" xsi:type="object">P3PaymentMethod</argument>
 		</arguments>
 	</type>
+	<type name="Magento\Framework\Session\SessionStartChecker">
+		<plugin name="transparent_session_checker" type="P3\PaymentGateway\Plugin\TransparentSessionChecker"/>
+	</type>
 	<type name="\Magento\Framework\App\Config\ScopeConfigInterface">
 		<arguments>
 			<argument name="scopeConfig" xsi:type="object">ScopeConfigInterface</argument>
