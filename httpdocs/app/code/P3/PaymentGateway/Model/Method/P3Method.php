@@ -32,6 +32,7 @@ use P3\SDK\Gateway;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
 use Magento\Sales\Model\Order\Payment\Transaction\BuilderInterface;
+use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 
 class P3Method extends AbstractMethod {
     const VERIFY_ERROR = 'The signature provided in the response does not match. This response might be fraudulent';
@@ -93,9 +94,11 @@ class P3Method extends AbstractMethod {
         Session $checkoutSession,
         CustomerSession $customerSession,
         BuilderInterface $transactionBuilder,
+        InvoiceSender $invoiceSender,
         array $data = []
     ) {
         self::$_urlBuilder = $urlBuilder;
+        $this->invoiceSender = $invoiceSender;
 
         parent::__construct(
             $context,
@@ -326,6 +329,11 @@ class P3Method extends AbstractMethod {
                 $invoice->register();
                 $invoice->setTransactionId($data['xref']);
                 $invoice->save();
+                $this->invoiceSender->send($invoice);
+                
+                $order->addCommentToStatusHistory(
+                 __('Notified customer about invoice creation #%1.', $invoice->getId())
+                )->setIsCustomerNotified(true)->save();
             }
 
             $order->setBaseTotalPaid($amount)->setTotalPaid($amount);
