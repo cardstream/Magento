@@ -88,13 +88,13 @@ class P3Method extends AbstractMethod {
         Data $paymentData,
         ScopeConfigInterface $scopeConfig,
         Logger $logger,
-        AbstractResource $resource = null,
-        AbstractDb $resourceCollection = null,
         OrderFactory $orderFactory,
         Session $checkoutSession,
         CustomerSession $customerSession,
         BuilderInterface $transactionBuilder,
         InvoiceSender $invoiceSender,
+        AbstractResource $resource = null,
+        AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         self::$_urlBuilder = $urlBuilder;
