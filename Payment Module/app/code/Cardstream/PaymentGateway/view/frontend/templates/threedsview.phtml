@@ -1,0 +1,16 @@
+<?php 
+
+$data = $block->getData();
+$url = $data['threeDSURL'];
+
+echo "<form id=\"silentPost\" action=\"{$url}\" method=\"post\">";
+foreach ($data['threeDSRequest'] as $key => $value) {
+    echo "<input type=\"hidden\" name=\"{$key}\" value=\"{$value}\"/>";
+}
+echo "</form>";
+
+$scriptString = <<<SCRIPT
+window.setTimeout("document.forms.silentPost.submit()", 0);
+SCRIPT;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $scriptString, false); ?>
