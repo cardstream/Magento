@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+
+    <!-- Trigger during frontend bootstrap -->
+    <event name="controller_front_send_response_before">
+        <observer name="opn_auto_enforce_samesite_none"
+                  instance="OPN\Payment\Observer\EnforceSameSiteNone" />
+    </event>
+
+    <!-- Adds Apple Pay / Google Pay shortcut buttons to the cart page and mini-cart -->
+    <event name="shortcut_buttons_container">
+        <observer name="opn_express_shortcut"
+                  instance="OPN\Payment\Observer\AddExpressShortcutObserver" />
+    </event>
+</config>

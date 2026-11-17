@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+         <section id="web">
+            <group id="cookie">
+                <field id="samesite" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>SameSite</label>
+                    <source_model>OPN\Payment\Model\Config\Source\SameSite</source_model>
+                </field>
+            </group>
+        </section>
+        <section id="payment">
+            <group id="qidigitalpayment" translate="label" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Open Payment Network</label>
+
+                <field id="active" translate="label comment" sortOrder="1" type="select" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+
+                <field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Payment From Applicable Countries</label>
+                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                </field>
+
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Payment From Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                </field>
+
+                <field id="sort_order" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                    <frontend_class>validate-number</frontend_class>
+                </field>
+                
+                <!-- General Settings -->
+                <group id="general_settings" translate="label" type="fieldset" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>General Settings</label>
+                    
+                    <field id="methods" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Payment Methods</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\CheckboxList</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+
+                    <field id="debug" translate="label" type="checkboxes" sortOrder="95" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Debug</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\Debug</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+                </group>
+
+                <!-- Gateway Settings -->
+                <group id="gateway_settings" translate="label" type="fieldset" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Gateway Settings</label>
+
+                    <field id="gateway_url" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Gateway URL</label>
+                    </field>
+
+                    <field id="queue_gateway_url" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Custom Hosted Form URL</label>
+                        <comment>Optional – Please use the custom URL that has been provided by your payment service provider.</comment>
+                    </field>
+
+                    <field id="gateway_id" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Merchant ID</label>
+                    </field>
+
+                    <field id="signature_key" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Signature Key</label>
+                    </field>
+
+                    <field id="integration_type" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Integration Type</label>
+                        <source_model>OPN\Payment\Model\Config\Source\IntegrationType</source_model>
+                    </field>
+
+                    <field id="purchase_type" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Purchase Type</label>
+                        <source_model>OPN\Payment\Model\Config\Source\PurchaseType</source_model>
+                    </field>
+                    
+                    <field id="capture_delay" translate="label" type="text" sortOrder="55" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Capture Delay</label>
+                    </field>
+
+                    <field id="country_code" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Country Code</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <comment><![CDATA[The country the <strong>merchant</strong> trades from &mdash; not the customer's. Sent to the gateway as the ISO-3166-1 numeric code, and used as the <code>countryCode</code> in the Apple Pay and Google Pay sheets. Was a free-text field, which allowed invalid values to be saved and silently replaced with GB.]]></comment>
+                    </field>
+
+                    <field id="3d_secure" translate="label" type="checkboxes" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Enable 3D Secure</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\EnableSecure</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+                    <field id="save_card_enabled" translate="label" type="select" sortOrder="101" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Enable Save Card</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+
+
+                </group>
+
+                <!-- Apple Pay Settings -->
+                <group id="applepay_settings" translate="label" type="fieldset" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Apple Pay Settings</label>
+
+                    <field id="apple_merchant_name" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Merchant Display Name</label>
+                    </field>
+
+                     <field id="apple_allowed_cards" translate="label" type="checkboxes" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Allowed Cards</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\CardTypes</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+
+                    <field id="apple_enable_product" translate="label" type="checkboxes" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Enable on Product Page</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\Debug</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+
+                    <field id="apple_enable_cart" translate="label" type="checkboxes" sortOrder="46" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Enable on Cart Page &amp; Mini-cart</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\Debug</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+                </group>
+
+                <!-- Google Pay Settings -->
+                <group id="googlepay_settings" translate="label" type="fieldset" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Google Pay Settings</label>
+
+                    <field id="google_environment" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Test Environment</label>
+                        <source_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\Environment</source_model>
+                    </field>
+
+                    <field id="google_merchant_id" translate="label" type="text" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Merchant ID</label>
+                    </field>
+
+                    <field id="google_merchant_name" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Merchant Name</label>
+                    </field>
+
+                    <field id="google_gateway_identifier" translate="label" type="text" sortOrder="35" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Gateway Identifier</label>
+                        <comment>Open url 'https://developers.google.com/pay/api/web/guides/tutorial#tokenization' to find your gateway identifier for Google Pay</comment>
+                    </field>
+
+                     <field id="google_allowed_cards" translate="label" type="checkboxes" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Allowed Cards</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\CardTypes</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+
+                    <field id="google_enable_product" translate="label" type="checkboxes" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Enable on Product Page</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\Debug</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+
+                    <field id="google_enable_cart" translate="label" type="checkboxes" sortOrder="46" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Enable on Cart Page &amp; Mini-cart</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\Debug</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+                </group>
+
+
+                <!-- Additional Settings -->
+                <group id="additional_settings" translate="label" type="fieldset" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Additional Settings</label>
+
+                    <field id="additional_fields" translate="label" type="text" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Additional fields</label>
+                        <frontend_model>OPN\Payment\Block\Adminhtml\System\Config\Form\Field\FieldMap</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    </field>
+                </group>
+
+            </group>
+        </section>
+    </system>
+</config>

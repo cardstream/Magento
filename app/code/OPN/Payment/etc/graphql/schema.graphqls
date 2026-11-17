@@ -1,0 +1,17 @@
+type OpnPaymentMethod {
+  code: String
+  title: String
+  is_active: Boolean
+}
+
+type Query {
+  opnPaymentMethods: [OpnPaymentMethod] @resolver(class: "OPN\\Payment\\Model\\Resolver\\OpnPaymentMethods")
+}
+
+type OpnRedirectResponse {
+  redirect_url: String
+}
+
+type Mutation {
+  opnRedirect(order_id: String!): OpnRedirectResponse @resolver(class: "OPN\\Payment\\Model\\Resolver\\OpnRedirect")
+}

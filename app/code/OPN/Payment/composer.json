@@ -1,0 +1,44 @@
+{
+    "name": "opn/magento2-payment",
+    "description": "Open Payment Network payment gateway module for Magento 2. Supports hosted, modal, direct, Apple Pay, Google Pay, PayPal, PPRO and Nomupay.",
+    "version": "3.1.11",
+    "type": "magento2-module",
+    "license": "proprietary",
+    "keywords": [
+        "magento2",
+        "payment",
+        "gateway",
+        "opn",
+        "apple-pay",
+        "google-pay"
+    ],
+    "require": {
+        "php": ">=7.4",
+        "magento/framework": ">=102.0",
+        "magento/module-sales": "*",
+        "magento/module-checkout": "*",
+        "magento/module-customer": "*",
+        "magento/module-quote": "*",
+        "magento/module-catalog": "*",
+        "magento/module-tax": "*",
+        "magento/module-directory": "*",
+        "magento/module-bundle": "*",
+        "magento/module-vault": "*",
+        "magento/module-payment": "*",
+        "magento/module-store": "*",
+        "magento/module-backend": "*"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "OPN\\Payment\\": ""
+        }
+    },
+    "extra": {
+        "map": [
+            ["**", "OPN/Payment"]
+        ]
+    }
+}

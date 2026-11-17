@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Store/etc/config.xsd">
+    <default>
+        <web>
+            <cookie>
+                <samesite>Lax</samesite>
+                <affected_keys>form_key,private_content_version,X-Magento-Vary</affected_keys>
+            </cookie>
+        </web>
+        <payment>
+            <qidigitalpayment>
+                <payment_action>authorize</payment_action> <!-- You can use another method -->
+                <model>OPN\Payment\Model\PaymentMethod</model>
+                <active>1</active>
+                <title>OPN Payment</title>
+                <order_status>pending_payment</order_status><!-- set default order status-->
+            </qidigitalpayment>
+        </payment>
+        <csp>
+            <mode>
+                <storefront>
+                    <report_uri>https://gateway.cardstream.com/</report_uri>
+                </storefront>
+            </mode>
+        </csp>
+
+    </default>
+</config>

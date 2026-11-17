@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\Stdlib\CookieManagerInterface">
+        <plugin name="switch_samesite"
+                type="OPN\Payment\Plugin\SwitchSameSite"
+                sortOrder="10"/>
+    </type>
+    <type name="Magento\Framework\Session\Config\ConfigInterface">
+        <plugin name="modify_same_site"
+                type="OPN\Payment\Plugin\Session\ModifySameSite"
+                sortOrder="10"/>
+    </type>
+    <type name="Magento\Checkout\Model\CompositeConfigProvider">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="opn_payment_config_provider" xsi:type="object">OPN\Payment\Model\Ui\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
+</config>
+

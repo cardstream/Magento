@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!--
+        Dedicated logger for var/log/open_payment_network.log.
+
+        Helper\Data::log() previously instantiated \Zend_Log directly, which fatals on
+        Magento 2.4.6+ (Zend Framework 1 was removed). This routes the same output through
+        Monolog instead, so enabling Debug no longer takes checkout down.
+    -->
+    <!--
+        Base this on Monolog\Logger, NOT Magento\Framework\Logger\Monolog.
+
+        Magento MERGES array arguments into the parent type's configuration rather than
+        replacing them. Magento\Framework\Logger\Monolog already configures
+        handlers = [system, debug, syslog], so a virtualType built on it inherits 'system'
+        and 'syslog' no matter what we declare, and every gateway request/response gets
+        written three times: to open_payment_network.log, to system.log AND to syslog.
+        Gateway payloads are verbose and Debug is routinely left enabled, so that is a real
+        disk-growth problem on a live store.
+
+        Do NOT try to suppress the inherited entries with <item xsi:type="null"/>: Magento
+        passes the null straight through into the handlers array, Monolog's pushHandler()
+        rejects it with a TypeError, and because Helper\Data takes this logger as a
+        constructor argument the whole module — and checkout with it — dies with a 500.
+
+        Monolog\Logger carries no argument configuration of its own, so building on it
+        gives a clean handler list containing only ours.
+    -->
+    <virtualType name="OpnPaymentLogger" type="Monolog\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">opnPayment</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="debug" xsi:type="object">OPN\Payment\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="OPN\Payment\Helper\Data">
+        <arguments>
+            <argument name="opnLogger" xsi:type="object">OpnPaymentLogger</argument>
+        </arguments>
+    </type>
+
+</config>

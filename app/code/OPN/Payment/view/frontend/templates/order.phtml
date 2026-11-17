@@ -1,0 +1,116 @@
+<?php
+	$response = $block->getOrderData(); 
+
+	$orderId = $block->getOrderId();
+	$id = $response['orderId'];
+
+	$error = false;
+
+	$style = '';
+	$heading = 'Thank you for your purchase!';
+	$info = $block->getInfo();
+	$error = $info['message'] ?? false;
+
+	$status    = $info['status'] ?? '';
+	$isPaid    = $status == 'success';
+	// 'pending' means the payment is still in flight — a 3-D Secure challenge, or an
+	// alternative-payment continuation. The gateway's responseMessage for that state is
+	// informational ("3DS authentication required"), NOT a failure. Rendering it as a fatal
+	// error is what produced "Order payment failed. Error: 3DS authentication required" for
+	// payments that were progressing perfectly normally.
+	$isPending = $status == 'pending';
+	$resumeUrl = !empty($info['redirect_3d_auth']['url'])
+		? $response['baseUrl'] . 'opn/order/threedsecure/id/' . $id
+		: null;
+
+	if( !empty($orderId) ){
+		$error = (!$isPending && !$isPaid && !empty($info['message'])) ? $info['message'] : false;
+
+		if( $isPending )
+			$heading = "Your payment is being verified...";
+		elseif( $error )
+			$heading = $status == 'cancelled' ? "Order payment cancelled." :  "Order payment failed.";
+	}
+
+	$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+	$storeManager = $objectManager->get('\Magento\Store\Model\StoreManagerInterface');
+	$store_url	= $storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
+?>
+<div style="margin-top: 15px;">
+<?php if( empty($orderId) && $error ){ ?>
+	<div style="border:1px solid #d00; padding: 10px 15px; margin-bottom:40px; background: #ff8686; color:#333; max-width: 500px">
+		<b><?php echo __('Error');?>:</b> <?php echo $block->escapeHtml(__($error)); ?>
+	</div>
+<?php } else { ?>
+	<div class="page-title-wrapper"> 
+		<h1 class="page-title">
+			<span class="base" data-ui-id="page-title-wrapper" style="<?php echo $style;?>"><?php echo __($heading);?></span>
+		</h1> 	
+	</div>
+	
+	<div class="checkout-success">
+	  
+		<p>
+			<?= $block->escapeHtml(__('Your order number is: %1.', '<a href="'.$response['baseUrl'].'sales/order/view/order_id/'.$id.'/" class="order-number"><strong>'.$block->getOrderId().'</strong></a>'), ['a', 'strong']) ?>
+		</p>
+	  
+	    <div class="">
+
+	   	 	<?php if( !empty($info['transaction_id']) ){ ?>
+	   	 		<p><?php echo __('Transaction ID');?>: <strong><?php echo $block->escapeHtml($info['transaction_id']);?></strong></p>
+	   	 	<?php } ?>
+	   	 	<?php if( !empty($info['reference']) ){ ?>
+	   	 		<p><?php echo __('Reference');?>: <strong><?php echo $block->escapeHtml($info['reference']);?></strong></p>
+			<?php } ?>
+
+	   	 	<?php if( $isPending ){ ?>
+				<div style="border:1px solid #c8a000; padding: 10px 15px; margin-bottom:40px; background: #fff4cc; color:#333; max-width: 500px">
+					<?php echo __("We're waiting for your bank to confirm this payment. Don't place the order again — you'll receive a confirmation email as soon as it completes.");?>
+				</div>
+
+				<?php if( $resumeUrl ){ ?>
+					<div class="actions-toolbar">
+						<div class="primary">
+							<a class="action primary continue" href="<?php echo $block->escapeUrl($resumeUrl);?>"><span><?php echo __('Continue verification');?></span></a>
+						</div>
+					</div>
+				<?php } ?>
+
+	   	 	<?php } elseif( $error ){ ?>
+			   	<div style="border:1px solid #d00; padding: 10px 15px; margin-bottom:40px; background: #ff8686; color:#333; max-width: 500px">
+					<b><?php echo __('Error');?>:</b> <?php echo $block->escapeHtml($error); ?>
+				</div>
+
+				<?php
+				// Offer the gateway's hosted form as a retry whenever the STORE is currently in a
+				// hosted mode. Keyed on the live setting, not on the mode recorded against the
+				// payment, which for a wallet order is always 'direct' (see DataAssignObserver).
+				$_helper  = $block->getHelper();
+				$settings = $_helper->getSettings();
+				$_mode    = $settings['integration_type'] ?? '';
+				if( $_mode != 'direct' ){
+					// Embedded returns inside an iframe; `emb=1` makes Redirect/Index break out of it.
+					$request = $_helper->prepareRequest($block->getDetails(), $settings, $_helper->getRedirectUrl($id, 'id', $_mode == 'embedded' ? 'emb=1' : ''));
+					echo $_helper->renderHTML('H', $id, $settings, $request, __('Retry'));
+				}
+				?>
+
+			<?php } else { ?>
+	            
+		   	 	<p><?= $block->escapeHtml(__('We\'ll email you an order confirmation with details and tracking info.')) ?></p>
+				<?php /*
+				<p class="sts_paid" style="color:green;<?php echo !$isPaid ? 'display:none;' : ''?>"><b>Payment paid successfully for this order !</b></p>
+				<?php */ ?>
+				
+				<div class="actions-toolbar">
+					<div class="primary">
+						<a class="action primary continue"  href="<?php echo $storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);?>"><span><?php echo __('Continue Shopping');?></span></a>
+					</div>
+				</div>
+			
+		   	 <?php } ?>
+	    </div>
+	</div>
+
+<?php } ?>
+</div>

@@ -1,0 +1,56 @@
+Credit / Debit Card,Credit / Debit Card
+Expiry,Expiry
+Use new card,Use new card
+All fields are required,All fields are required
+Card Number,Card Number
+Expiry Date,Expiry Date
+Security Code,Security Code
+Save Card,Save Card
+Apple Pay,Apple Pay
+Google Pay,Google Pay
+PayPal,PayPal
+PPRO,PPRO
+Nomupay,Nomupay
+Nuapay,Nuapay
+APM Method,APM Method
+Trying to start an Apple Pay session from an insecure document.,Trying to start an Apple Pay session from an insecure document.
+Google Pay APIs should be called in secure context!,Google Pay APIs should be called in secure context!
+Missing cardCVV,Missing cardCVV
+This field is required,This field is required
+Credit Card is not valid,Credit Card is not valid
+Security code is not valid,Security code is not valid
+Expiry date is not valid,Expiry date is not valid
+"Unable to process your request, try again","Unable to process your request, try again"
+Unable to verify merchant in ApplePay,Unable to verify merchant in ApplePay
+Unable to initialize payment,Unable to initialize payment
+"Unable to initialize Google Pay, please refresh your page and try again","Unable to initialize Google Pay, please refresh your page and try again"
+Unable to initialize Google pay,Unable to initialize Google pay
+"Unable to tokenize payment, try again","Unable to tokenize payment, try again"
+Please select APM method,Please select APM method
+Reference,Reference
+Invalid Order,Invalid Order
+Your order number is,Your order number is
+Order payment failed.,Order payment failed.
+Order payment cancelled.,Order payment cancelled.
+Unable to load shipping rates,Unable to load shipping rates
+Unable to purchase this product,Unable to purchase this product
+Shipping not available for selected address,Shipping not available for selected address
+Unable to initiate google pay,Unable to initiate google pay
+Invalid order payment request,Invalid order payment request
+Please first login to purchase this item,Please first login to purchase this item
+Selected address is not valid,Selected address is not valid
+This item is not available to buy,This item is not available to buy
+You cannot purchase this product at this time,You cannot purchase this product at this time
+Shipping not available for selected address,Shipping not available for selected address
+"Initializing payment, please wait","Initializing payment, please wait"
+Saved card not found or invalid,Saved card not found or invalid
+"Unable to process your payment, refresh page and try again","Unable to process your payment, refresh page and try again"
+Unable to process payment,Unable to process payment
+Secure payment form,Secure payment form
+Redirecting,Redirecting
+Continue,Continue
+Captured %1. Total captured: %2.,Captured %1. Total captured: %2.
+Transaction cancelled at the gateway. No funds will be taken.,Transaction cancelled at the gateway. No funds will be taken.
+"Refund of %1: the transaction had not yet settled, so it was cancelled at the gateway (CANCEL). No funds will be taken.","Refund of %1: the transaction had not yet settled, so it was cancelled at the gateway (CANCEL). No funds will be taken."
+"Refund of %1: the transaction had not yet settled, so the amount to be captured was reduced to %2 (CAPTURE). Total refunded: %3.","Refund of %1: the transaction had not yet settled, so the amount to be captured was reduced to %2 (CAPTURE). Total refunded: %3."
+Refunded %1 (REFUND_SALE). Total refunded: %2.,Refunded %1 (REFUND_SALE). Total refunded: %2.

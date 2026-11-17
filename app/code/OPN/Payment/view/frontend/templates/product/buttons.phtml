@@ -1,0 +1,735 @@
+<?php
+
+if( ($block->checkMethod('applepay') || $block->checkMethod('googlepay')) ){
+
+    $product = $block->getLayout()->getBlock('product.info')->getProduct();
+    $product_id = (int)$product->getId(); 
+
+    $price = 0;
+    $request = [];
+
+    $currencyCode = $block->getCurrency();
+    $countryCode = $block->getCountryCode();
+    $settings = $block->settings;
+
+    $buy_url = $this->getUrl("opn/order/process/action/get_totals");
+    $shipping_url = $this->getUrl("opn/order/process/action/get_shippings");
+    $confirm_url = $this->getUrl("opn/order/process/action/place_order");
+    $verify_url = $this->getUrl("opn/order/process/action/verify_merchant");
+
+    if( $product->getTypeId() == 'configurable' ){
+        $pricei = $product->getPriceInfo()->getPrice('regular_price');
+        $price = (float)trim($pricei->getMinRegularAmount() ?? '');
+    } else if( $product->getTypeId() == 'bundle'){
+        $price = $product->getPriceInfo()->getPrice('regular_price')->getMinimalPrice()->getValue();
+    } else if( $product->getTypeId() == 'grouped' ){
+        $instance = $product->getTypeInstance();
+        $associatedProducts = $instance->getAssociatedProducts($product);
+        foreach ($associatedProducts as $product) {
+            $price += round($product->getPrice()* $product->getQty(), 2);
+        }
+    } else
+        $price = (float)trim($product->getPrice() ?? '');
+
+    $price = number_format($price,2,'.','');
+
+    if( $block->checkMethod('applepay') ){
+        $request['applepay'] = [
+            'countryCode' => $countryCode,
+            'currencyCode' => $currencyCode,
+            "merchantCapabilities" => [ "supports3DS" ],
+            "supportedNetworks" => array_map('strtolower',$settings['apple_allowed_cards']),
+            "total" => [
+                "label" => $settings['apple_merchant_name'] ?? '',
+                "amount" => $price,
+            ]
+        ];
+    }
+
+    if( $block->checkMethod('googlepay') ){
+        $request['googlepay'] = [
+            'allowed_cards' => $settings['google_allowed_cards'] ?? [],
+            'gateway_provider' => $settings['google_gateway_identifier'] ?? '', 
+            'merchant_id' => $settings['gateway_id'] ?? '',
+            'google_environment' => $settings['google_environment'] ?? 'TEST',
+            'google_merchant_name' => $settings['google_merchant_name'] ?? '',
+            'google_merchant_id' => $settings['google_merchant_id'] ?? '',
+        ];
+    }
+
+?>
+<script>
+
+<?php if( $this->checkMethod('googlepay') ){ ?>
+var GPWindows = [];
+window.open = function (open) {
+    return function (url, name, features) {
+        var _nGPWindow = open.call(window, url, name || "gpay_window", features);
+        GPWindows.push(_nGPWindow);
+        return _nGPWindow;
+    };
+}(window.open);
+function CloseGPWindows(){
+    GPWindows.map(_gpw=>{
+        if (!_gpw.closed) _gpw.close();
+    });
+}
+var nParent = null;
+window.onload = function (load) {
+    return function (e) {
+        nParent = window.opener;
+        if (load != null) {
+            load.call(e);
+        }
+    }
+}(window.onload);
+
+window.onunload = function (unload) {
+    return function (e) {
+        //promote first branch page to parent
+        if (nParent != null && !nParent.closed && GPWindows.length > 0) {
+            nParent.GPWindows.push(GPWindows[0]);
+            GPWindows[0].nParent = nParent;
+        }
+        //make first child window new root
+        for (var i = 1; i < GPWindows.length; i++) {
+            GPWindows[i].nParent = GPWindows[0];
+            GPWindows[0].GPWindows.push(GPWindows[i]);
+        }
+        if (unload != null) {
+            unload.call(e);
+        }
+    }
+}(window.onunload);
+<?php } ?>
+
+require([
+    'jquery',
+    'Magento_ConfigurableProduct/js/configurable',
+    'mage/translate'
+], function ($) {
+
+    function __(s){
+        return $.mage.__(s.toString().trim());
+    }
+
+    function showError(msg = null) {
+        if( !msg )
+             $('.messages.qd-msg').hide();
+        else {
+            $('.messages.qd-msg').find('.error-qd > div').text(__(msg));
+            $('.messages.qd-msg').fadeIn();
+        }
+    }
+
+    function getBrowserInfo(){
+        var screen_width = (window && window.screen ? window.screen.width : '0');
+        var screen_height = (window && window.screen ? window.screen.height : '0');
+        var screen_depth = (window && window.screen ? window.screen.colorDepth : '0');
+        var identity = (window && window.navigator ? window.navigator.userAgent : '');
+        var language = (window && window.navigator ? (window.navigator.language ? window.navigator.language : window.navigator.browserLanguage) : '');
+        var timezone = (new Date()).getTimezoneOffset();
+        var java = (window && window.navigator ? navigator.javaEnabled() : false);
+        
+        return {
+            deviceIdentity: identity,
+            deviceTimeZone: timezone,
+            deviceCapabilities: 'javascript' + (java ? ',java' : ''),
+            deviceAcceptLanguage: language,
+            deviceScreenResolution:  screen_width + 'x' + screen_height + 'x' + screen_depth,
+        };
+    }
+
+    function getProductPrice(){
+        let price, qty, totalPrice = 0;
+        if( $('[name*="super_group"]').length ){
+            $('[name*="super_group"]').each(function(){
+                price = parseFloat($(this).closest('tr').find('.price-final_price').text().match(/\d+(?:\.\d+)?/g));
+                qty = parseInt($(this).val().trim());
+                if( isNaN(qty) || qty < 1) qty = 1;
+                totalPrice += parseFloat((price * qty).toFixed(2));
+            });
+        } else {
+            price = parseFloat($('#product-price-<?php echo $product_id;?>[data-price-type="finalPrice"]').text().match(/\d+(?:\.\d+)?/g));
+            qty = $('#product_addtocart_form [name="qty"]').length ? parseInt($('#product_addtocart_form [name="qty"]').val().trim()) : 1;
+            if( isNaN(qty) || qty < 1) qty = 1;
+
+            totalPrice = price * qty;
+        }
+
+        return parseFloat(totalPrice);
+    }
+
+    // Parses the add-to-cart form into the nested object Controller/Order/Process.php
+    // expects ({ product: 1, qty: 2, super_attribute: {...} }). A raw .serialize()
+    // string is NOT interchangeable with this: server-side, $params['product']['product_id']
+    // on a string is an illegal offset, isset() reports false, and $product_id falls
+    // through to 0 — which surfaces to the shopper as Magento's
+    // "The product that was requested doesn't exist." Both wallets must use this.
+    //
+    // Declared here, outside the per-wallet blocks: the Google Pay flow calls it too,
+    // and it used to be defined inside the Apple-Pay-only block — so a store with
+    // Google Pay enabled and Apple Pay disabled hit a ReferenceError instead.
+    function getProductData(){
+        const params = new URLSearchParams($('#product_addtocart_form').serialize());
+        let obj = {};
+        for (let [key, value] of params.entries()) {
+            if (key.includes("[")) {
+                let _key = key.split('[');
+                let _k = _key[0];
+                _key = _key[1].replace(']','').trim();
+                obj[_k] = obj[_k] || (_key == '' ? [] : {});
+                if( _key == '' )
+                    obj[_k].push(value);
+                else
+                    obj[_k][_key] = value;
+            } else
+                obj[key] = value;
+        }
+        return obj;
+    }
+
+<?php if( $block->checkMethod('applepay') ){ ?>
+
+    $.ajax({
+        url: 'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js',
+        dataType: 'script',
+        crossDomain: true,
+        success: ()=>{
+            if (window.ApplePaySession && ApplePaySession.canMakePayments() )
+                $(".btn_opn_applepay").show();
+        },
+        error: () => {},
+        async: true
+    });
+
+    jQuery.onApplePayButtonClicked = async() => {
+        showError();
+
+        try{
+            var appleShippingMethods = {};
+            // Apple's ApplePayPayment object carries NO shippingMethod: the chosen method only
+            // ever arrives through onshippingmethodselected, so it has to be tracked here.
+            // Reading event.payment.shippingMethod (always undefined) posted no shipping method
+            // at all, which the server reports as "Shipping not available for selected address"
+            // (reported 21/09/2026).
+            var appleSelectedShipping = null;
+
+            let request = <?php echo json_encode($request['applepay'])?>;
+            request.total.amount = getProductPrice().toFixed(2);
+            request.requiredShippingContactFields = ['email', 'name', 'phone', 'postalAddress'];
+            request.requiredBillingContactFields  = ['name', 'postalAddress'];
+            request.shippingType = 'shipping';
+
+            const session = new ApplePaySession(3, request);
+
+            session.onpaymentauthorized = event => {
+                var shippingContact = event.payment.shippingContact || {};
+                var contact = event.payment.shippingContact || event.payment.billingContact || {};
+
+                // Apple only ever returns emailAddress on shippingContact. Reading it off the
+                // billingContact fallback (virtual products request no shipping contact) yields
+                // an empty email, which Magento rejects with "Email has a wrong format".
+                var _email = shippingContact.emailAddress || contact.emailAddress || '';
+
+                var _address = {
+                    name:      (contact.givenName || '') + ' ' + (contact.familyName || ''),
+                    telephone:  contact.phoneNumber    || '',
+                    street:     contact.addressLines   || ['', ''],
+                    city:       contact.locality       || '',
+                    postcode:   contact.postalCode     || '',
+                    region_id:  contact.administrativeArea || '',
+                    country_id: (contact.countryCode   || '').toUpperCase(),
+                    email:      _email,
+                };
+                var _shpId = appleSelectedShipping;
+                var _token = btoa(JSON.stringify(event.payment.token.paymentData));
+
+                $.ajax({
+                    url: '<?php echo $confirm_url;?>',
+                    dataType: 'json',
+                    method: 'post',
+                    data: {
+                        method: 'applepay',
+                        token: _token,
+                        // Must be the parsed object, not .serialize() — see getProductData().
+                        product: getProductData(),
+                        address: _address,
+                        shipping: appleShippingMethods[_shpId] || null,
+                        browserInfo: getBrowserInfo(),
+                        saveCard: 'N',
+                        cardId: 'new',
+                    },
+                    success: function(json) {
+                        if( json && json['success'] ){
+                            session.completePayment({ status: ApplePaySession.STATUS_SUCCESS });
+                            setTimeout(()=>window.location.replace(json["redirect"]), 20);
+                        } else {
+                            session.completePayment({ status: ApplePaySession.STATUS_FAILURE });
+                            showError(json['message'] || 'Unable to process your request, try again');
+                        }
+                    },
+                    error: function() {
+                        session.completePayment({ status: ApplePaySession.STATUS_FAILURE });
+                        showError('Unable to process your request, try again');
+                    }
+                });
+            };
+
+            session.onvalidatemerchant = async event => {
+                try {
+                    let resp = await fetch(`<?php echo $verify_url;?>?validation_url=${encodeURI(event.validationURL)}`, {
+                        method: 'GET',
+                    });
+
+                    if (!resp.ok)
+                        throw new Error('Unable to verify merchant in ApplePay');
+
+                    resp = await resp.json();
+
+                    if( resp && resp.session )
+                        session.completeMerchantValidation(resp.session);
+                    else
+                        throw new Error((resp.statusMessage || resp.message) || 'Unable to verify merchant in ApplePay');
+
+                } catch(error){
+                    showError(error.message);
+                    session.abort();
+                }
+            };
+
+            session.onpaymentmethodselected = event => {
+                session.completePaymentMethodSelection({ newTotal: request.total });
+            };
+
+            session.onshippingmethodselected = event => {
+                appleSelectedShipping = (event.shippingMethod || {}).identifier || appleSelectedShipping;
+                var shipping = parseFloat((event.shippingMethod || {}).amount || 0);
+                var base     = parseFloat(request.total.amount || 0);
+                session.completeShippingMethodSelection({
+                    newTotal: { label: request.total.label, amount: (base + shipping).toFixed(2) }
+                });
+            };
+
+            session.onshippingcontactselected = event => {
+                var contact = event.shippingContact || {};
+                var addr = {
+                    country_id: (contact.countryCode || '').toUpperCase(),
+                    region_id:  contact.administrativeArea || '',
+                    postcode:   contact.postalCode || '',
+                    city:       contact.locality || '',
+                    street:     contact.addressLines || []
+                };
+                $.ajax({
+                    url: '<?php echo $shipping_url;?>',
+                    method: 'POST',
+                    dataType: 'json',
+                    data: { address: addr, product: getProductData() },
+                    success: function(resp) {
+                        if( resp && resp.success ){
+                            appleShippingMethods = resp.data || {};
+                            var methods = Object.values(appleShippingMethods).map(function(r) {
+                                return { identifier: r.id, label: r.label, detail: r.description || '', amount: r.price };
+                            });
+                            var firstRate = methods[0] || null;
+                            // Apple pre-selects the first method offered; mirror that until the
+                            // shopper changes it.
+                            appleSelectedShipping = firstRate ? firstRate.identifier : null;
+                            var newAmount = parseFloat(request.total.amount) + parseFloat(firstRate ? firstRate.amount : 0);
+                            session.completeShippingContactSelection({
+                                newShippingMethods: methods,
+                                newTotal: { label: request.total.label, amount: newAmount.toFixed(2) }
+                            });
+                        } else {
+                            session.completeShippingContactSelection({
+                                errors: [new ApplePayError('shippingContactInvalid', 'country', resp ? (resp.message || '') : '')],
+                                newTotal: request.total,
+                                newShippingMethods: []
+                            });
+                        }
+                    },
+                    error: function() {
+                        session.completeShippingContactSelection({ errors: [], newTotal: request.total, newShippingMethods: [] });
+                    }
+                });
+            };
+
+            session.begin();
+
+        } catch (e) {
+            showError(e.message);
+        }
+    }
+
+<?php } if( $this->checkMethod('googlepay') ){ ?>
+
+    $.ajax({
+        url: 'https://pay.google.com/gp/p/js/pay.js',
+        dataType: 'script',
+        success: ()=>{
+            onGooglePayLoaded();
+        },
+        error: () => { },
+        async: true
+    });
+
+    var googleShippingMethods = { };
+    var getShippingMethods = async function(address){
+		return new Promise(function(resolve, reject) {
+
+            $.ajax({
+                method: 'POST',
+                url: '<?php echo $shipping_url;?>',
+                data: {
+                    product: getProductData(),
+                    address: { 
+                        country_id: address.countryCode , 
+                        region_id: address.administrativeArea , 
+                        postcode: address.postalCode, 
+                        city: address.locality, street: [] 
+                    },
+                },
+                success: function(resp){
+                    resolve(resp);
+                }, error: function(){
+                    reject({ 
+                        success: false,
+                        selectedId: null,
+                        data: [],
+                        message: __("Unable to load shipping rates"),
+                    });
+                }
+            });
+
+		});
+	}
+    
+    let paymentsClient = null, paymentDetails;
+            
+    function onGooglePayLoaded(){
+
+        try{ 
+            let config = <?php echo json_encode($request['googlepay']);?>;
+            
+            if ( paymentsClient === null ) {
+
+                let _clientRequest = {
+                    environment: config.google_environment,
+                    merchantInfo: {
+                        merchantName: config.google_merchant_name,
+                        merchantId: config.google_merchant_id,
+                    },
+                    emailRequired: true,
+                    paymentDataCallbacks: {
+                        onPaymentAuthorized: (resp) => {
+
+                            return new Promise(function(resolve, reject){
+                                
+                                let _paymentToken = resp.paymentMethodData.tokenizationData.token;
+                               
+
+                                let _address = resp.shippingAddress || {};
+                                let _shpId = resp.shippingOptionData.id || null;
+
+                                $.ajax({
+                                    url: '<?php echo $confirm_url?>',
+                                    dataType: 'json',
+                                    method: 'post',
+                                    data: {
+                                        method: 'googlepay',
+                                        token: _paymentToken, 
+                                        product: getProductData(),
+                                        address: {
+                                            name: _address.name,
+                                            telephone: _address.phoneNumber,
+                                            street: [
+                                                _address.address1 || '',
+                                                // `address3 && address3 == ''` could never be true, so the
+                                                // third address line was discarded on every order.
+                                                (_address.address2 || '') + (_address.address3 ? ', ' + _address.address3 : '')
+                                            ],
+                                            city: _address.locality,
+                                            postcode: _address.postalCode,
+                                            region_id: _address.administrativeArea,
+                                            country_id: _address.countryCode,
+                                            email: resp.email || '',
+                                        },
+                                        
+                                        shipping: googleShippingMethods[_shpId] || null,
+                                        browserInfo: getBrowserInfo(),
+                                        saveCard: 'N',
+                                        cardId: "new",
+                                    },
+                                    success: function(json) {
+                                        if( json && json['success'] ){
+                                            resolve({transactionState: 'SUCCESS'});
+                                            setTimeout(()=>window.location.replace(json["redirect"]),20);
+                                        } else {
+                                            resolve({ transactionState: 'ERROR', error: { reason: 'PAYMENT_AUTHORIZATION', message: json['message'] || 'Payment failed', intent: 'PAYMENT_AUTHORIZATION' } });
+                                            showError(json['message'] || 'Unable to process your request, try again');
+                                        }
+                                    },
+                                    error: function(xhr, ajaxOptions, thrownError) {
+                                        resolve({ transactionState: 'ERROR', error: { reason: 'PAYMENT_AUTHORIZATION', message: 'Server error', intent: 'PAYMENT_AUTHORIZATION' } });
+                                        showError('Unable to process your request, try again');
+                                    }
+                                });
+                                
+                            });
+                        },
+                    }
+                };
+
+                
+                var _calculateransactionInfo = function(shippingId){
+                    let info = paymentDetails;
+
+                    let shippingCost = googleShippingMethods[shippingId] ? googleShippingMethods[shippingId].price || '0.00' : '0.00';
+                
+                    info.displayItems = info.displayItems.filter(itm=>(!(itm.status == 'FINAL' && itm.type == 'LINE_ITEM')));
+
+                    info.displayItems.push({
+                        type: "LINE_ITEM",
+                        label: "Shipping Cost",
+                        price: shippingCost,
+                        status: "FINAL"
+                    });
+
+                    let totalPrice = 0.00;
+                    info.displayItems.forEach(displayItem => totalPrice += parseFloat(displayItem.price));
+                    info.totalPrice = totalPrice.toString();
+
+                    return info;
+                }
+
+                _clientRequest.paymentDataCallbacks.onPaymentDataChanged = (resp) => {
+                    return new Promise(async function(resolve, reject) {
+
+                        var error = false;
+                        let _request = {};
+                        
+                        let shippingAddress = resp.shippingAddress;
+                        let shippingOptionData = resp.shippingOptionData;
+                        
+                        if( resp.callbackTrigger == "INITIALIZE" ){
+
+                            try{
+                                let resp = await fetch('<?php echo $buy_url;?>', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                    body: $('#product_addtocart_form').serialize()
+                                });
+
+                                if (!resp.ok)
+                                    throw new Error('Unable to purchase this product');
+                                
+                                resp = await resp.json(); 
+
+                                if( resp.success ){
+
+                                    let pinfo = paymentDetails;
+                                    pinfo.displayItems = [ 
+                                        { label: "Sub-Total", type: "SUBTOTAL", price: resp.data.subtotal.toFixed(2) },
+                                        { label: "Tax", type: "TAX", price:  resp.data.tax.toFixed(2) }
+                                    ];
+                                    
+                                    pinfo.totalPrice = resp.data.total.toFixed(2);
+
+                                    _request.newTransactionInfo = pinfo; 
+
+                                } else 
+                                    error = resp.message || 'Unable to purchase this product';
+
+                            } catch(e){
+                                error = e.message || 'Unable to purchase this product';        
+                            }
+                        }
+                        
+                        if( error ){
+                            CloseGPWindows();
+                            showError(error);
+                        }
+
+                        if( error ){
+                            _request.error = {
+                                reason: "PAYMENT_AUTHORIZATION",
+                                message: error,
+                                intent: "UNKNOWN_ERROR"
+                            };
+
+                        } else { 
+                            
+                            if (resp.callbackTrigger == "INITIALIZE" || resp.callbackTrigger == "SHIPPING_ADDRESS") {
+
+                                var s_resp = await getShippingMethods(shippingAddress);
+                                if( s_resp.success ){
+                                
+                                    googleShippingMethods = s_resp.data || {};
+                                    
+                                    _request.newShippingOptionParameters = {
+                                        defaultSelectedOptionId: s_resp.selectedId,
+                                        shippingOptions: Object.values(googleShippingMethods),
+                                    };
+
+                                    _request.newTransactionInfo = _calculateransactionInfo(s_resp.selectedId);
+
+                                } else {
+                                    _request.error = {
+                                        reason: "SHIPPING_ADDRESS_UNSERVICEABLE",
+                                        message: s_resp.message || "Shipping not available for selected address",
+                                        intent: "SHIPPING_ADDRESS"
+                                    };
+                                } 
+
+                            } else if (resp.callbackTrigger == "SHIPPING_OPTION") {
+                                _request.newTransactionInfo = _calculateransactionInfo(shippingOptionData.id);
+                            }
+                        }
+
+                        resolve(_request);
+                    });
+                }; 
+                
+                paymentsClient = new google.payments.api.PaymentsClient(_clientRequest);
+            }
+
+            var baseCardPaymentMethod = {
+                type: 'CARD',
+                parameters: {
+                    allowedAuthMethods: ["PAN_ONLY", "CRYPTOGRAM_3DS"],
+                    allowedCardNetworks: config.allowed_cards
+                }
+            };
+
+            var cardPaymentMethod = Object.assign({}, baseCardPaymentMethod, {
+                tokenizationSpecification: {
+                    type: 'PAYMENT_GATEWAY',
+                    parameters: { 'gateway': config.gateway_provider, 'gatewayMerchantId': config.merchant_id },
+                }
+            });
+
+            var initGPayRequest = () =>{
+
+                const _request = Object.assign({}, { apiVersion: 2, apiVersionMinor: 0 });
+                let totalPrice = <?php echo (float)$price;?>;
+
+                let _ttlPrice = getProductPrice();
+                if( _ttlPrice > 0)
+                    totalPrice = _ttlPrice;
+
+                paymentDetails = {
+                    countryCode: '<?php echo $countryCode;?>',
+                    currencyCode: '<?php echo $currencyCode;?>',
+
+                    displayItems: [
+                        { label: 'Subtotal', type: "SUBTOTAL", price: totalPrice.toFixed(2) },
+                        { label: 'Tax', type: "TAX",  price: "0.00" },
+                        { label: 'Shipping', type: "LINE_ITEM", price: "0.00" },
+                    ],
+                    totalPriceStatus: "FINAL",
+                    totalPrice: totalPrice.toFixed(2),
+                    totalPriceLabel: "Total"
+                };
+
+                _request.allowedPaymentMethods = [cardPaymentMethod];
+                _request.merchantInfo = {
+                    merchantName: config.google_merchant_name,
+                    merchantId: config.google_merchant_id,
+                };
+               
+                _request.callbackIntents = ["SHIPPING_ADDRESS", "SHIPPING_OPTION", "PAYMENT_AUTHORIZATION"];
+                _request.shippingAddressRequired = true;
+                _request.shippingAddressParameters = { phoneNumberRequired: true };
+                _request.shippingOptionRequired = true;
+                // emailRequired must be on the PaymentDataRequest passed to loadPaymentData(),
+                // not the PaymentsClient constructor options — Google silently ignores it there.
+                _request.emailRequired = true;
+            
+                _request.transactionInfo = paymentDetails;
+
+                paymentsClient.loadPaymentData(_request);
+            };
+
+            if( paymentsClient ){
+                paymentsClient.isReadyToPay(Object.assign( 
+                    {}, 
+                    { apiVersion: 2, apiVersionMinor: 0 }, 
+                    { allowedPaymentMethods: [baseCardPaymentMethod] 
+                })).then(function(response) {
+                    if (response.result) {
+                        const button = document.createElement('button');
+                        button.type      = 'button';
+                        button.className = 'opn-gpay-custom-btn';
+                        button.innerHTML =
+                            '<svg viewBox="0 0 48 48" height="20" width="20" xmlns="http://www.w3.org/2000/svg">' +
+                                '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>' +
+                                '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>' +
+                                '<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>' +
+                                '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>' +
+                            '</svg>' +
+                            '<span>' + __('Buy with Google Pay') + '</span>';
+                        button.addEventListener('click', function(){
+                            showError();
+                            initGPayRequest();
+                        });
+                        document.getElementById('btn_opn_googlepay').appendChild(button);
+                    }
+
+                }).catch(function(err) {
+                    showError((err.statusMessage || err.message) || "Unable to initiate google pay");
+                });
+            }
+
+        } catch(err){
+           
+            showError(err.message);
+        };
+    }
+
+<?php } ?>
+
+});
+
+</script>
+<style>
+    .box_opn_methods > div{ margin-bottom: 10px; display:inline-block; vertical-align: top; }
+    .messages.qd-msg{ margin-top: 5x; }
+    .opn-gpay-custom-btn{
+        display:flex; align-items:center; justify-content:center; gap:6px;
+        width:240px; height:40px; padding:5px 0; box-sizing:border-box;
+        border:0; border-radius:5px; background:#000 !important;
+        color:#fff !important; font-size:15px; font-weight:500; cursor:pointer;
+        transition:opacity .15s; box-shadow:none;
+    }
+    .opn-gpay-custom-btn:hover, .opn-gpay-custom-btn:focus, .opn-gpay-custom-btn:active{ background:#000 !important; color:#fff !important; opacity:.85; box-shadow:none; border:0; }
+    .opn-gpay-custom-btn svg{ flex:0 0 auto; }
+</style>
+
+<div class="box_opn_methods">
+<?php if( $block->checkMethod('applepay') ){ ?>
+    <style>
+    apple-pay-button {
+    --apple-pay-button-width: 240px;
+    --apple-pay-button-height: 40px;
+    --apple-pay-button-border-radius: 5px;
+    --apple-pay-button-padding: 5px 0px;
+    --apple-pay-button-box-sizing: border-box;
+    }
+    </style>
+    <div class="btn_opn_applepay" style="display: none;">
+        <apple-pay-button buttonstyle="black" type="buy" onClick="jQuery.onApplePayButtonClicked();" locale="en-US"></apple-pay-button>
+    </div>
+
+<?php } if( $block->checkMethod('googlepay') ){ ?>
+
+    <div id="btn_opn_googlepay" class="btn_opn_googlepay"></div>
+
+<?php } ?>
+
+</div>
+
+    <div class="messages qd-msg" style="display: none;">
+        <div aria-atomic="true" role="alert" class="message message-error error error-qd"><div></div></div>
+    </div>
+
+<?php } ?>

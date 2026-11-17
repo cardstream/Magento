@@ -1,0 +1,27 @@
+<?php  $info = $block->getInfo(); ?>
+
+<?php if( !empty($info['transaction_id']) ){ ?>
+    <p><?php echo __('Transaction ID');?>: <strong><?php echo $block->escapeHtml($info['transaction_id']);?></strong></p>
+<?php } ?>
+
+<?php if( !empty($info['reference']) ){ ?>
+    <p><?php echo __('Reference');?>: <strong><?php echo $block->escapeHtml($info['reference']);?></strong></p>
+<?php } ?>
+
+<?php
+    $status = $info['status'] ?? '';
+    // Same rule as order.phtml: 'pending' is a payment still in flight (3-D Secure /
+    // alternative-payment continuation), not a failure. Its gateway responseMessage is
+    // informational and must not be rendered as an error.
+    $isPending = $status == 'pending';
+?>
+
+<?php if( $isPending ){ ?>
+    <div style="border:1px solid #c8a000; padding: 10px 15px; margin-bottom:40px; background: #fff4cc; color:#333; max-width: 500px">
+        <?php echo __("We're waiting for your bank to confirm this payment. You'll receive a confirmation email as soon as it completes.");?>
+    </div>
+<?php } elseif( $status != 'success' && !empty($info['message']) ){ ?>
+    <div style="border:1px solid #d00; padding: 10px 15px; margin-bottom:40px; background: #ff8686; color:#333; max-width: 500px">
+        <b><?php echo __('Error');?>:</b> <?php echo $block->escapeHtml($info['message']); ?>
+    </div>
+<?php } ?>

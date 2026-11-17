@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
+    <policies>
+        <!-- script-src policy -->
+        <policy id="script-src">
+            <values>
+                <value id="cardstream" type="host">gateway.cardstream.com</value>
+                <value id="modesglobal" type="host">pay.modesglobal.net</value>
+                <value id="cdn-apple" type="host">*.cdn-apple.com</value>
+                <value id="google" type="host">*.google.com</value>
+                <value id="gstatic" type="host">*.gstatic.com</value>
+                <value id="googleapis" type="host">*.googleapis.com</value>
+            </values>
+        </policy>
+
+        <!-- style-src policy -->
+        <policy id="style-src">
+            <values>
+                <value id="cardstream" type="host">gateway.cardstream.com</value>
+                <value id="modesglobal" type="host">pay.modesglobal.net</value>
+                <value id="cdn-apple" type="host">*.cdn-apple.com</value>
+                <value id="google" type="host">*.google.com</value>
+                <value id="gstatic" type="host">*.gstatic.com</value>
+                <value id="googleapis" type="host">*.googleapis.com</value>
+            </values>
+        </policy>
+
+         <!-- connect-src policy -->
+        <policy id="connect-src">
+            <values>
+               <value id="cardstream" type="host">gateway.cardstream.com</value>
+                <value id="modesglobal" type="host">pay.modesglobal.net</value>
+                <value id="cdn-apple" type="host">*.cdn-apple.com</value>
+                <value id="google" type="host">*.google.com</value>
+                <value id="gstatic" type="host">*.gstatic.com</value>
+                <value id="googleapis" type="host">*.googleapis.com</value>
+            </values>
+        </policy>
+
+         <!-- img-src policy -->
+        <policy id="img-src">
+            <values>
+                <value id="cardstream" type="host">gateway.cardstream.com</value>
+                <value id="modesglobal" type="host">pay.modesglobal.net</value>
+                <value id="cdn-apple" type="host">*.cdn-apple.com</value>
+                <value id="google" type="host">pay.google.com</value>
+                <value id="gstatic" type="host">www.gstatic.com</value>
+                <value id="googleapis" type="host">*.googleapis.com</value>
+            </values>
+        </policy>
+
+        <!-- font-src policy -->
+        <policy id="font-src">
+            <values>
+               <value id="cardstream" type="host">gateway.cardstream.com</value>
+                <value id="modesglobal" type="host">pay.modesglobal.net</value>
+                <value id="cdn-apple" type="host">*.cdn-apple.com</value>
+                <value id="google" type="host">*.google.com</value>
+                <value id="gstatic" type="host">*.gstatic.com</value>
+                <value id="googleapis" type="host">*.googleapis.com</value>
+            </values>
+        </policy>
+
+        <!-- frame-src policy -->
+        <policy id="frame-src">
+            <values>
+               <value id="cardstream" type="host">gateway.cardstream.com</value>
+                <value id="modesglobal" type="host">pay.modesglobal.net</value>
+                <value id="cdn-apple" type="host">*.cdn-apple.com</value>
+                <value id="google" type="host">*.google.com</value>
+                <value id="gstatic" type="host">*.gstatic.com</value>
+                <value id="googleapis" type="host">*.googleapis.com</value>
+            </values>
+        </policy>
+
+    </policies>
+</csp_whitelist>

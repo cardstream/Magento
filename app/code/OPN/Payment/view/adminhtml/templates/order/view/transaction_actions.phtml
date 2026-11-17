@@ -1,0 +1,174 @@
+<?php
+
+$paymentDetails = $block->getPaymentDetails();
+
+if( !empty($paymentDetails) ){ ?>
+
+    <table class="admin__table-secondary" style="margin-top: 10px;">
+        <?php foreach ($paymentDetails['formatted'] as $label => $value): ?>
+            <tr>
+                <td><?= $block->escapeHtml($label) ?></td>
+                
+                <td><?= $block->escapeHtml($value) ?></td>
+            </tr>
+        <?php endforeach; ?>
+
+        <?php if ( $paymentDetails['auth_type'] != 'sale' || $paymentDetails['capture_delay'] !='' ){ ?>
+            <tr>
+                <td><?= __('Captured Total') ?></td>
+                <td>
+                  
+                    <span class="capture_text"><?= $paymentDetails['captured_total_frmt'] ?></span>
+                    <?php if( $paymentDetails['allow_capture'] ){ ?>
+                        &nbsp;-&nbsp;
+                        <input type="text" id="capture_amount" value="<?= $paymentDetails['capture_pending'] ?>" style="padding:5px;width:80px;"/>
+                        <button id="btn_capture" class="action-primary"><?= __('Capture') ?></button>
+                        <?php if( $paymentDetails['allow_cancel'] ){ ?>
+                           <button id="btn_cancel" class="action-secondary"><?= __('Cancel') ?></button>
+                        <?php } ?>
+                    <?php } ?>
+                </td>
+            </tr>
+        <?php } ?>
+
+         <?php if ($paymentDetails['allow_refund'] || $paymentDetails['refunded_total'] > 0 ): ?>
+            <tr>
+                <td><?= __('Refunded') ?></td>
+                <td>
+                    <span class="refund_text"><?= $paymentDetails['refunded_total_frmt'] ?></span>
+                    <?php if ($paymentDetails['allow_refund'] ): ?>
+                        &nbsp;-&nbsp;
+                        <input type="text" id="refund_amount" value="<?= $paymentDetails['refund_pending'] ?>"
+                               style="padding:5px;width:100px;"/>
+                        <button id="btn_refund" class="action-primary"><?= __('Refund') ?></button>
+            
+                    <?php endif; ?>
+                </td>
+            </tr>
+        <?php endif; ?>
+
+    </table>
+
+    <div id="payment_transaction_msg" style="display:none;"></div>
+
+
+<script>
+require(['jquery'], function($) {
+    // Both figures come back on every successful action: a pre-settlement refund changes
+    // what will be captured, so the Captured row has to move as well as the Refunded row.
+    function applyTotals(data) {
+        if (data.captured) { $('.capture_text').text(data.captured).show(); }
+        if (data.refunded) { $('.refund_text').text(data.refunded).show(); }
+    }
+
+    function showMsg(type, msg) {
+        var inner = $('<div>').addClass('message message-' + type).css({marginTop:'10px',padding:'8px 10px 12px 47px'});
+        $('<div>').text(msg).appendTo(inner);
+        $('#payment_transaction_msg').empty().append(inner).fadeIn();
+    }
+
+    <?php if ($paymentDetails['allow_capture']): ?>
+    $('#btn_capture').click(function () {
+        if (confirm('<?= $block->escapeJs(__('Are you sure you want to capture the payment?')) ?>')) {
+          
+            $('#payment_transaction_msg').hide();
+            $('#btn_capture,#btn_cancel').hide();
+            $('#capture_amount').hide();
+
+            $.ajax({
+                type: 'POST',
+                dataType: 'json',
+                url: '<?= $block->escapeUrl($paymentDetails['action_url']) ?>',
+                data: { action: 'capture', amount: $('#capture_amount').val(), form_key: window.FORM_KEY },
+                success: function (data) {
+                    if (data.success) {
+                        showMsg('success', data.msg);
+                        applyTotals(data);
+                    } else {
+                        $('#btn_capture,#btn_cancel').show();
+                        $('#capture_amount').show();
+                        showMsg('error', data.msg || 'Unable to process request');
+                    }
+                },
+                error: function () {
+                   
+                    $('#btn_capture,#btn_cancel').show();
+                    $('#capture_amount').show();
+                    showMsg('error', 'Unable to process request');
+                }
+            });
+        }
+    });
+    <?php endif; ?>
+
+    <?php if ($paymentDetails['allow_cancel']): ?>
+    $('#btn_cancel').click(function () {
+        if (confirm('<?= $block->escapeJs(__('Are you sure you want to cancel this transaction?')) ?>')) {
+            
+            $('#payment_transaction_msg').hide();
+            $('#btn_capture,#btn_cancel').hide();
+            $('#capture_amount').hide();
+
+            $.ajax({
+                type: 'POST',
+                dataType: 'json',
+                url: '<?= $block->escapeUrl($paymentDetails['action_url']) ?>',
+                data: { action: 'cancel', form_key: window.FORM_KEY },
+                success: function (data) {
+                   
+                    if (data.success) {
+                        showMsg('success', data.msg);
+                        applyTotals(data);
+                    } else {
+                        $('#btn_capture,#btn_cancel').show();
+                        $('#capture_amount').show();
+                        showMsg('error', data.msg || 'Unable to process.');
+                    }
+                },
+                error: function () {
+                  
+                    $('#btn_capture,#btn_cancel').show();
+                    $('#capture_amount').show();
+                    showMsg('error', 'Unable to process.');
+                }
+            });
+        }
+    });
+    <?php endif; ?>
+
+    <?php if ($paymentDetails['allow_refund']): ?>
+    $('#btn_refund').click(function () {
+        if (confirm('<?= $block->escapeJs(__('Are you sure you want to refund this amount?')) ?>')) {
+           
+            $('#payment_transaction_msg').hide();
+            $('#btn_refund').hide();
+            $('#refund_amount').hide();
+
+            $.ajax({
+                type: 'POST',
+                dataType: 'json',
+                url: '<?= $block->escapeUrl($paymentDetails['action_url']) ?>',
+                data: { action: 'refund', amount: $('#refund_amount').val(), form_key: window.FORM_KEY },
+                success: function (data) {
+                    
+                    if (data.success) {
+                        showMsg('success', data.msg);
+                        applyTotals(data);
+                    } else {
+                        $('#btn_refund').show();
+                        $('#refund_amount').show();
+                        showMsg('error', data.msg || 'Unable to process.');
+                    }
+                },
+                error: function () {
+                    $('#btn_refund').show();
+                    $('#refund_amount').show();
+                    showMsg('error', 'Unable to process.');
+                }
+            });
+        }
+    });
+    <?php endif; ?>
+});
+</script>
+<?php } ?>
